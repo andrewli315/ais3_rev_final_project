@@ -64,8 +64,8 @@ _start:
     int 0x10
 
 ;--------get user inupt----------
-    xor cl, cl
-    xor di, di
+    ; xor cl, cl
+    ; xor di, di
     xor bx, bx ; default is turning off secure mode
     call print_secure_selector
 get_secure_mode:
@@ -163,6 +163,7 @@ print_secure_selector_end:
     pop bx
     ret
 
+
 ; just for debug
 ; backspace_pressed:
 ;     cmp cl, 0
@@ -186,9 +187,110 @@ print_secure_selector_end:
 ;     int 0x10    ; new line
 
 get_secure_mode_done:
-    push ebx ; secure mode: 0; non secure mode: 1
+    mov [0x600], ebx ; secure mode: 0; non secure mode: 1
 
-    
+    ; clear menu
+    mov bp, ssmsgclear
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x00f0
+    mov dx, 0x111f
+    int 0x10
+    mov bp, ssmsgclear
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x101f
+    int 0x10
+
+    xor bx, bx ; default is choose top kernel
+    call print_kernel_selector
+get_load_kernel:
+    mov ah, 0
+    int 0x16    ; get user input
+    cmp ax, 0x4800
+    jz select_up
+    cmp ax, 0x5000
+    jz select_down
+    cmp al, 0x0d
+    jz get_load_kernel_done
+
+    jmp get_load_kernel
+
+select_up:
+    cmp bx, 0
+    jz get_load_kernel
+    dec bx
+    call print_kernel_selector
+    jmp get_load_kernel
+
+select_down:
+    cmp bx, 1
+    jz get_load_kernel
+    inc bx
+    call print_kernel_selector
+    jmp get_load_kernel
+
+print_kernel_selector:
+    push bx
+    cmp bx, 0
+    jnz print_kernel_selector_2
+    mov bp, ksmsg1
+    mov cx, 21      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0070  ; color: FG 7-> RGB
+    mov dx, 0x101e  ; position: row:10 col:20
+    int 0x10
+    mov bp, ksmsg2
+    mov cx, 21
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x111e
+    int 0x10
+    mov bp, kspointer
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x0070
+    mov dx, 0x101d
+    int 0x10
+    mov bp, ksspace
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x111d
+    int 0x10
+    jmp print_kernel_selector_end
+print_kernel_selector_2:
+    mov bp, ksmsg1
+    mov cx, 21      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0007  ; color: FG 7-> RGB
+    mov dx, 0x101e  ; position: row:10 col:20
+    int 0x10
+    mov bp, ksmsg2
+    mov cx, 21
+    mov ax, 0x1300
+    mov bx, 0x0070
+    mov dx, 0x111e
+    int 0x10
+    mov bp, kspointer
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x0070
+    mov dx, 0x111d
+    int 0x10
+    mov bp, ksspace
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x101d
+    int 0x10
+print_kernel_selector_end
+    pop bx
+    ret
+
+get_load_kernel_done:
+    mov [0x604], ebx ; kernel id
 
     mov eax, 3 ; clear screen
     int 0x10
@@ -296,11 +398,23 @@ p_mode_start:
 ;顯示 P
     mov byte [gs:160], 'P'
 ;--------載入 kernel--------
+    ; choose which kernel
+    mov ax, [0x604]
+    cmp ax, 0
+    jnz not_kernel1
     mov ax, KERNEL_START_SECTOR
+    jmp choose_kernel_end
+not_kernel1:
+    mov ax, KERNEL2_START_SECTOR
+choose_kernel_end:
     mov bx, KERNEL_BASE_ADDR
     mov cx, 20
 
     call read_disk
+; If user choose to enter secure mode
+    mov eax, [0x600]
+    cmp eax, 0
+    jz integrity_test_done
 ;-------- get md5sum of the kernel ----
     push KERN_BIN_SIZE ; better sol: linker script 
     push KERNEL_BASE_ADDR
@@ -516,6 +630,8 @@ loadermsg:
     db '2 loader in real.'
 
 ; ss: secure selector 
+ssmsgclear:
+    db '                 '
 ssmsg1:
     db ' Non secure mode'
 ssmsg2:
@@ -523,6 +639,18 @@ ssmsg2:
 sspointer:
     db '>'
 ssspace:
+    db ' '
+
+; ks: kernel selector 
+ksmsgclear:
+    db '                      '
+ksmsg1:
+    db ' 1. Terry NiNi Kernel'
+ksmsg2:
+    db ' 2. ????? ???? Kernel'
+kspointer:
+    db '>'
+ksspace:
     db ' '
 
 ; ssb: secure selector banner
