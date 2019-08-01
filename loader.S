@@ -18,132 +18,8 @@ _start:
     mov bx, 0x001f
     mov dx, 0x1800
     int 0x10
-
-    
-;--------get user inupt----------
-    xor cl, cl
-    xor di, di
-    xor bx, bx
-    call print_secure_selector
-get_user_input:
-    mov ah, 0
-    int 0x16    ; get user input
-
-    cmp ax, 0x4800
-    jz w_pressed
-    cmp ax, 0x5000
-    jz s_pressed
-    cmp al, 0x0d
-    jz get_user_input_done
-
-    ; just for debug
-    ; cmp al, 0x8 ; backspace pressed?
-    ; jz backspace_pressed
-    ; cmp al, 0x0d ; enter pressed?
-    ; jz enter_pressed
-    ; mov ah, 0xe
-    ; int 0x10 ; print out
-    ; stosb
-    ; inc cl
-
-    jmp get_user_input
-
-w_pressed:
-    cmp bx, 0
-    jz get_user_input
-    mov bx, 0
-    call print_secure_selector
-    jmp get_user_input
-
-s_pressed:
-    cmp bx, 1
-    jz get_user_input
-    mov bx, 1
-    call print_secure_selector
-    jmp get_user_input
-
-print_secure_selector:
-    push bx
-    cmp bx, 0
-    jnz print_non_secure
-    mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
-    mov bx, 0x0070
-    mov dx, 0x101b
-    int 0x10
-    mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
-    mov bx, 0x0007
-    mov dx, 0x111b
-    int 0x10
-    mov bp, sspointer
-    mov cx, 1
-    mov ax, 0x1301
-    mov bx, 0x00f0
-    mov dx, 0x101a
-    int 0x10
-    mov bp, ssspace
-    mov cx, 1
-    mov ax, 0x1300
-    mov bx, 0x0000
-    mov dx, 0x111a
-    int 0x10
-    jmp print_secure_selector_end
-print_non_secure:
-    mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
-    mov bx, 0x0007
-    mov dx, 0x101b
-    int 0x10
-    mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
-    mov bx, 0x0070
-    mov dx, 0x111b
-    int 0x10
-    mov bp, sspointer
-    mov cx, 1
-    mov ax, 0x1301
-    mov bx, 0x00f0
-    mov dx, 0x111a
-    int 0x10
-    mov bp, ssspace
-    mov cx, 1
-    mov ax, 0x1300
-    mov bx, 0x0000
-    mov dx, 0x101a
-    int 0x10
-print_secure_selector_end:
-    pop bx
-    ret
-
-; just for debug
-; backspace_pressed:
-;     cmp cl, 0
-;     jz get_user_input
-;     dec di
-;     mov byte [di], 0
-;     dec cl
-;     mov ah, 0x0e
-;     mov al, 0x08
-;     int 0x10
-;     mov al, ' '
-;     int 0x10
-;     mov al, 0x08
-;     int 0x10
-;     jmp get_user_input
-; enter_pressed:
-;     mov ah, 0x0e
-;     mov al, 0x0d
-;     int 0x10
-;     mov al, 0x0a
-;     int 0x10    ; new line
-
-get_user_input_done:
-    call print_ais3_banner
+loadermsg: 
+    db '2 loader in real.'
 ;--------e820 get memory size--------
     xor ebx, ebx
     mov edx, 0x534d4150
@@ -234,7 +110,8 @@ mem_get_ok:
 [BITS 32]
 ;以32位元指令的格式組譯指令
 %include "secure-boot.autogen.inc"
-extern RSA_by_c_is_safe_and_sound
+KERN_MD5_BASE equ 0x2000
+extern RSA_by_c
 
 p_mode_start:
 ;初始化段暫存器
@@ -258,49 +135,36 @@ p_mode_start:
     push KERNEL_BASE_ADDR
     push KERN_MD5_BASE ; addr of calculated md5sum
     call _rwf_md5
-
     xor ecx, ecx
 integrity_test:
-    cmp ecx, 16 
+    cmp ecx, 16
     jz integrity_test_done
-;-------- edit by andrew Li --------------------
-;
-; this is usage and asm code for rsa decryption
-;
-; ------- rsa decrypt stored cipehr ------------
-;   mov eax, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx ]
-;   mov ebx, dword [PUB_KEY]
-;   mov edx, dword [MODULO]
-;   push eax
-;   push ebx
-;   push edx
-;   call mod_power
-; ------ compare decrypt and md5 ---------------
-;   mov edx, dword [KERNEL_MD5_BASE + ecx]
-;   add ecx, 4
-;   cmp eax, edx
-;   jz integrity_test
-;   call print_error
-;   jmp $
-; ----------------------------------------------
-
-
-
 ;-------- decrypt stored partial md5sum -------
-    mov eax, dword [EFUSE_KEY]
-    mov ebx, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx]
-    xor eax, ebx
+;    mov eax, dword [EFUSE_KEY]
+;    xor esi, eax
     ; mov dword [0x2010 + ecx], eax ! just for debugging
+    xor esi, esi
+    mov si, word [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx + ecx]
 ;-------- compare 2 partial md5sum ------------
-    mov edx, dword [KERN_MD5_BASE + ecx]
-    add ecx, 4
-    cmp eax, edx
-    jz integrity_test    
-    call print_error
-    jmp $
+    xor eax, eax
+    mov al, [KERN_MD5_BASE + ecx]
+    mov edi, eax
+;    push 3087
+;    push 67591
+    push esi
+    mov esi, ecx
+    push 64507
+    push 6159
+    call RSA_by_c
+    mov ecx, esi
+    add ecx, 1
+    cmp edi, eax
+    je integrity_test
+test_failed:
+    jmp test_failed    
 integrity_test_done:
 
-    ; call RSA_by_c_is_safe_and_sound
+;    call RSA_by_c_is_safe_and_sound
     
 ;--------啟用分頁機制--------
 ;1. 設定好 Page Directory，Page Table
@@ -437,25 +301,6 @@ create_kernel_pde:
     loop create_kernel_pde
     ret
 
-print_error:
-;--------------------------------
-;Print ERROR
-;--------------------------------
-    mov esi, 0x1e0
-    mov byte[gs:esi], 'E' 
-    mov byte[gs:esi + 1], 0x0F
-    mov byte[gs:esi + 2], 'R' 
-    mov byte[gs:esi + 3], 0x0F
-    mov byte[gs:esi + 4], 'R' 
-    mov byte[gs:esi + 5], 0x0F
-    mov byte[gs:esi + 6], 'O' 
-    mov byte[gs:esi + 7], 0x0F
-    mov byte[gs:esi + 8], 'R' 
-    mov byte[gs:esi + 9], 0x0F
-    mov byte[gs:esi + 10], '!' 
-    mov byte[gs:esi + 11], 0x0F
-    ret 
-
 ;--------GDT--------
 ;第0個不可用
 GDT_BASE:   
@@ -487,20 +332,5 @@ gdt_ptr:
 ards_buf times 200 db 0
 ards_nr dw 0
 
-loadermsg: 
-    db '2 loader in real.'
-
-; ss: secure selector 
-ssmsg1:
-    db ' Secure mode'
-ssmsg2:
-    db ' Non secure mode'
-sspointer:
-    db '>'
-ssspace:
-    db ' '
-
 
 %include "md5.inc"
-%include "math.inc"
-%include "banner.inc"
