@@ -4,6 +4,7 @@
 Install bochs
 After downloading bochs-2.6.9.tar.gz from [here](https://sourceforge.net/projects/bochs/files/bochs/2.6.9/bochs-2.6.9.tar.gz/download)
 ```
+sudo apt-get install libgtk2.0-dev
 sudo tar zxvf bochs-2.6.9.tar.gz
 cd bochs-2.6.9
 ./configure --enable-debugger --enable-disasm --enable-readline LIBS='-lX11'
