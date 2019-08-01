@@ -1,0 +1,8 @@
+BUILD_DIR=./build
+LIB=-I include/ 
+CFLAGS=-fno-builtin -fno-stack-protector -O2 
+all:img
+img:
+	dd if=$(BUILD_DIR)/mbr.bin of=hd60M.img count=1 bs=512 conv=notrunc
+	dd if=$(BUILD_DIR)/loader.bin of=hd60M.img bs=512 count=8 seek=1 conv=notrunc 
+	dd if=$(BUILD_DIR)/kernel.bin of=hd60M.img bs=512 count=200 seek=9 conv=notrunc	
