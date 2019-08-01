@@ -19,6 +19,7 @@ _start:
     mov dx, 0x1800
     int 0x10
 
+    
 ;--------get user inupt----------
     xor cl, cl
     xor di, di
@@ -142,7 +143,7 @@ print_secure_selector_end:
 ;     int 0x10    ; new line
 
 get_user_input_done:
-
+    call print_ais3_banner
 ;--------e820 get memory size--------
     xor ebx, ebx
     mov edx, 0x534d4150
@@ -262,6 +263,29 @@ p_mode_start:
 integrity_test:
     cmp ecx, 16 
     jz integrity_test_done
+;-------- edit by andrew Li --------------------
+;
+; this is usage and asm code for rsa decryption
+;
+; ------- rsa decrypt stored cipehr ------------
+;   mov eax, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx ]
+;   mov ebx, dword [PUB_KEY]
+;   mov edx, dword [MODULO]
+;   push eax
+;   push ebx
+;   push edx
+;   call mod_power
+; ------ compare decrypt and md5 ---------------
+;   mov edx, dword [KERNEL_MD5_BASE + ecx]
+;   add ecx, 4
+;   cmp eax, edx
+;   jz integrity_test
+;   call print_error
+;   jmp $
+; ----------------------------------------------
+
+
+
 ;-------- decrypt stored partial md5sum -------
     mov eax, dword [EFUSE_KEY]
     mov ebx, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx]
@@ -476,4 +500,7 @@ sspointer:
 ssspace:
     db ' '
 
+
 %include "md5.inc"
+%include "math.inc"
+%include "banner.inc"
