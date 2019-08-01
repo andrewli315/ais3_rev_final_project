@@ -19,21 +19,65 @@ _start:
     mov dx, 0x1800
     int 0x10
 
+;--------print banner----------
+    mov bp, ssbr1
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x030f
+    int 0x10
+    mov bp, ssbr2
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x040f
+    int 0x10
+    mov bp, ssbr3
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x050f
+    int 0x10
+    mov bp, ssbr4
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x060f
+    int 0x10
+    mov bp, ssbr5
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x070f
+    int 0x10
+    mov bp, ssbr6
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x080f
+    int 0x10
+    mov bp, ssbr7
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x090f
+    int 0x10
+
 ;--------get user inupt----------
     xor cl, cl
     xor di, di
-    xor bx, bx
+    xor bx, bx ; default is turning off secure mode
     call print_secure_selector
-get_user_input:
+get_secure_mode:
     mov ah, 0
     int 0x16    ; get user input
 
     cmp ax, 0x4800
-    jz w_pressed
+    jz turn_off_secure
     cmp ax, 0x5000
-    jz s_pressed
+    jz turn_on_secure
     cmp al, 0x0d
-    jz get_user_input_done
+    jz get_secure_mode_done
 
     ; just for debug
     ; cmp al, 0x8 ; backspace pressed?
@@ -45,75 +89,75 @@ get_user_input:
     ; stosb
     ; inc cl
 
-    jmp get_user_input
+    jmp get_secure_mode
 
-w_pressed:
-    cmp bx, 0
-    jz get_user_input
-    mov bx, 0
-    call print_secure_selector
-    jmp get_user_input
-
-s_pressed:
+turn_on_secure:
     cmp bx, 1
-    jz get_user_input
+    jz get_secure_mode
     mov bx, 1
     call print_secure_selector
-    jmp get_user_input
+    jmp get_secure_mode
+
+turn_off_secure:
+    cmp bx, 0
+    jz get_secure_mode
+    mov bx, 0
+    call print_secure_selector
+    jmp get_secure_mode
 
 print_secure_selector:
     push bx
     cmp bx, 0
     jnz print_non_secure
     mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
-    mov bx, 0x0070
-    mov dx, 0x101b
+    mov cx, 16      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0070  ; color: BG 7-> RGB
+    mov dx, 0x1020  ; position: row:10 col:1b
     int 0x10
     mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
+    mov cx, 12
+    mov ax, 0x1300
     mov bx, 0x0007
-    mov dx, 0x111b
+    mov dx, 0x1120
     int 0x10
     mov bp, sspointer
     mov cx, 1
     mov ax, 0x1301
     mov bx, 0x00f0
-    mov dx, 0x101a
+    mov dx, 0x101f
     int 0x10
     mov bp, ssspace
     mov cx, 1
     mov ax, 0x1300
     mov bx, 0x0000
-    mov dx, 0x111a
+    mov dx, 0x111f
     int 0x10
     jmp print_secure_selector_end
 print_non_secure:
     mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
+    mov cx, 16
+    mov ax, 0x1300
     mov bx, 0x0007
-    mov dx, 0x101b
+    mov dx, 0x1020
     int 0x10
     mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
+    mov cx, 12
+    mov ax, 0x1300
     mov bx, 0x0070
-    mov dx, 0x111b
+    mov dx, 0x1120
     int 0x10
     mov bp, sspointer
     mov cx, 1
     mov ax, 0x1301
     mov bx, 0x00f0
-    mov dx, 0x111a
+    mov dx, 0x111f
     int 0x10
     mov bp, ssspace
     mov cx, 1
     mov ax, 0x1300
     mov bx, 0x0000
-    mov dx, 0x101a
+    mov dx, 0x101f
     int 0x10
 print_secure_selector_end:
     pop bx
@@ -141,8 +185,13 @@ print_secure_selector_end:
 ;     mov al, 0x0a
 ;     int 0x10    ; new line
 
-get_user_input_done:
+get_secure_mode_done:
+    push ebx ; secure mode: 0; non secure mode: 1
 
+    
+
+    mov eax, 3 ; clear screen
+    int 0x10
 ;--------e820 get memory size--------
     xor ebx, ebx
     mov edx, 0x534d4150
@@ -468,12 +517,39 @@ loadermsg:
 
 ; ss: secure selector 
 ssmsg1:
-    db ' Secure mode'
-ssmsg2:
     db ' Non secure mode'
+ssmsg2:
+    db ' Secure mode '
 sspointer:
     db '>'
 ssspace:
     db ' '
+
+; ssb: secure selector banner
+;           :::     ::::::::::: ::::::::   ::::::::
+;        :+: :+:       :+:    :+:    :+: :+:    :+:
+;      +:+   +:+      +:+    +:+               +:+ 
+;    +#++:++#++:     +#+    +#++:++#++     +#++:   
+;   +#+     +#+     +#+           +#+        +#+   
+;  #+#     #+#     #+#    #+#    #+# #+#    #+#    
+; ###     ### ########### ########   ########      
+; length of a row: 49
+ssbr1:
+    db '          :::     ::::::::::: ::::::::   ::::::::' ; length 49
+ssbr2:
+    db '       :+: :+:       :+:    :+:    :+: :+:    :+:'
+ssbr3:
+    db '     +:+   +:+      +:+    +:+               +:+ '
+ssbr4:
+    db '   +#++:++#++:     +#+    +#++:++#++     +#++:   '
+ssbr5:
+    db '  +#+     +#+     +#+           +#+        +#+   '
+ssbr6:
+    db ' #+#     #+#     #+#    #+#    #+# #+#    #+#    '
+ssbr7:
+    db '###     ### ########### ########   ########      '
+
+
+
 
 %include "md5.inc"
