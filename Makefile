@@ -8,6 +8,8 @@ img:asm
 	dd if=$(BUILD_DIR)/kernel.bin of=hd60M.img bs=512 count=200 seek=33 conv=notrunc	
 	dd if=$(BUILD_DIR)/kernel2.bin of=hd60M.img bs=512 count=200 seek=233 conv=notrunc	
 asm:
+	if [ ! -d $(BUILD_DIR) ]; then echo "build dir does not exist"; \
+        mkdir $(BUILD_DIR) ; fi
 	nasm -I include/ -o $(BUILD_DIR)/mbr.bin mbr.S
 	nasm -I include/ -f elf32 -o $(BUILD_DIR)/print.o lib/print.S
 	gcc  -I lib/ -m32 -c -o $(BUILD_DIR)/main.o kernel/main.c
