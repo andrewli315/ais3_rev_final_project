@@ -202,7 +202,7 @@ print_skull:
     mov byte[gs:esi+ebx+1], 0xF
     mov ebx, 0x640
     add ebx, 20
-    add ebx, 62
+    add ebx, 60
     mov ecx, 4
     call print_
     
@@ -216,7 +216,7 @@ print_skull:
     mov byte[gs:esi+ebx+1], 0xF
     mov ebx,0x6e0
     add ebx, 20
-    add ebx, 70
+    add ebx, 68
     mov byte[gs:esi+ebx], '|'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx,4
@@ -229,7 +229,7 @@ print_skull:
     mov byte[gs:esi+ebx+1], 0xF
     mov ebx, 0x780
     add ebx, 20
-    add ebx, 70 
+    add ebx, 68 
     mov byte[gs:esi+ebx], '|'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx, 4
@@ -270,7 +270,7 @@ print_skull:
 
     mov ebx,0x6e0
     add ebx, 20
-    add ebx, 70
+    add ebx, 68
     mov byte[gs:esi+ebx], '|'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx,4
@@ -283,7 +283,7 @@ print_skull:
     mov byte[gs:esi+ebx+1], 0xF
     mov ebx, 0x820
     add ebx, 20
-    add ebx, 70 
+    add ebx, 68 
     mov byte[gs:esi+ebx], '|'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx, 4
@@ -327,7 +327,7 @@ print_skull:
     
     mov ebx, 0x8c0
     add ebx, 20
-    add ebx, 70
+    add ebx, 68
     mov byte[gs:esi+ebx], '\'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx, 28
@@ -336,7 +336,7 @@ print_skull:
     
     mov ebx, 0x960
     add ebx, 20
-    add ebx, 72
+    add ebx, 70
     mov byte[gs:esi+ebx], '\'
     mov byte[gs:esi+ebx+1], 0xF
     add ebx, 2

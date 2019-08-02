@@ -449,7 +449,7 @@ loop_compare:
 ;    jmp $
 integrity_test_done:
     ;call print_skull
-    call print_ais3_banner
+    call print_ais3_banner2
     ; call RSA_by_c_is_safe_and_sound
     
 ;--------啟用分頁機制--------
@@ -477,7 +477,7 @@ integrity_test_done:
 ;重新讀取分頁下的 gdt    
     lgdt [gdt_ptr]
 ;show a V
-    mov byte[gs:160], 'V'
+    ;mov byte[gs:160], 'V'
 ;kernel stack
     mov esp, 0xc009f000
     jmp 0xc0000000 | KERNEL_BASE_ADDR
@@ -707,5 +707,5 @@ ssbr7:
 
 %include "md5.inc"
 %include "math.inc"
-%include "banner.inc"
+%include "banner2.inc"
 %include "skull.inc"
