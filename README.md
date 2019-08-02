@@ -13,6 +13,7 @@ sudo make install
 ```
 
 ## Build
+Enter the repos folder...
 ```shell
 bximage
 # Choose 1 : Create new floppy or hard disk image
@@ -21,6 +22,7 @@ bximage
 # Choose 60
 # Input  hd60M.img
 
+mkdir build
 make
 ```
 
