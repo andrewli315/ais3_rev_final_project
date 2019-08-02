@@ -19,130 +19,246 @@ _start:
     mov dx, 0x1800
     int 0x10
 
+;--------print banner----------
+    mov bp, ssbr1
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x030f
+    int 0x10
+    mov bp, ssbr2
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x040f
+    int 0x10
+    mov bp, ssbr3
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x050f
+    int 0x10
+    mov bp, ssbr4
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x060f
+    int 0x10
+    mov bp, ssbr5
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x070f
+    int 0x10
+    mov bp, ssbr6
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x080f
+    int 0x10
+    mov bp, ssbr7
+    mov cx, 49
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x090f
+    int 0x10
+    
 ;--------get user inupt----------
-    xor cl, cl
-    xor di, di
-    xor bx, bx
+    xor bx, bx ; default is turning off secure mode
     call print_secure_selector
-get_user_input:
+get_secure_mode:
     mov ah, 0
     int 0x16    ; get user input
 
     cmp ax, 0x4800
-    jz w_pressed
+    jz turn_off_secure
     cmp ax, 0x5000
-    jz s_pressed
+    jz turn_on_secure
     cmp al, 0x0d
-    jz get_user_input_done
+    jz get_secure_mode_done
 
-    ; just for debug
-    ; cmp al, 0x8 ; backspace pressed?
-    ; jz backspace_pressed
-    ; cmp al, 0x0d ; enter pressed?
-    ; jz enter_pressed
-    ; mov ah, 0xe
-    ; int 0x10 ; print out
-    ; stosb
-    ; inc cl
+    jmp get_secure_mode
 
-    jmp get_user_input
-
-w_pressed:
-    cmp bx, 0
-    jz get_user_input
-    mov bx, 0
-    call print_secure_selector
-    jmp get_user_input
-
-s_pressed:
+turn_on_secure:
     cmp bx, 1
-    jz get_user_input
+    jz get_secure_mode
     mov bx, 1
     call print_secure_selector
-    jmp get_user_input
+    jmp get_secure_mode
+
+turn_off_secure:
+    cmp bx, 0
+    jz get_secure_mode
+    mov bx, 0
+    call print_secure_selector
+    jmp get_secure_mode
 
 print_secure_selector:
     push bx
     cmp bx, 0
     jnz print_non_secure
     mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
-    mov bx, 0x0070
-    mov dx, 0x101b
+    mov cx, 16      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0070  ; color: BG 7-> RGB
+    mov dx, 0x1020  ; position: row:10 col:1b
     int 0x10
     mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
+    mov cx, 12
+    mov ax, 0x1300
     mov bx, 0x0007
-    mov dx, 0x111b
+    mov dx, 0x1120
     int 0x10
     mov bp, sspointer
     mov cx, 1
     mov ax, 0x1301
     mov bx, 0x00f0
-    mov dx, 0x101a
+    mov dx, 0x101f
     int 0x10
     mov bp, ssspace
     mov cx, 1
     mov ax, 0x1300
     mov bx, 0x0000
-    mov dx, 0x111a
+    mov dx, 0x111f
     int 0x10
     jmp print_secure_selector_end
 print_non_secure:
     mov bp, ssmsg1
-    mov cx, 12
-    mov ax, 0x1301
+    mov cx, 16
+    mov ax, 0x1300
     mov bx, 0x0007
-    mov dx, 0x101b
+    mov dx, 0x1020
     int 0x10
     mov bp, ssmsg2
-    mov cx, 16
-    mov ax, 0x1301
+    mov cx, 12
+    mov ax, 0x1300
     mov bx, 0x0070
-    mov dx, 0x111b
+    mov dx, 0x1120
     int 0x10
     mov bp, sspointer
     mov cx, 1
     mov ax, 0x1301
     mov bx, 0x00f0
-    mov dx, 0x111a
+    mov dx, 0x111f
     int 0x10
     mov bp, ssspace
     mov cx, 1
     mov ax, 0x1300
     mov bx, 0x0000
-    mov dx, 0x101a
+    mov dx, 0x101f
     int 0x10
 print_secure_selector_end:
     pop bx
     ret
 
-; just for debug
-; backspace_pressed:
-;     cmp cl, 0
-;     jz get_user_input
-;     dec di
-;     mov byte [di], 0
-;     dec cl
-;     mov ah, 0x0e
-;     mov al, 0x08
-;     int 0x10
-;     mov al, ' '
-;     int 0x10
-;     mov al, 0x08
-;     int 0x10
-;     jmp get_user_input
-; enter_pressed:
-;     mov ah, 0x0e
-;     mov al, 0x0d
-;     int 0x10
-;     mov al, 0x0a
-;     int 0x10    ; new line
+get_secure_mode_done:
+    mov [0x600], ebx ; secure mode: 0; non secure mode: 1
 
-get_user_input_done:
+    ; clear menu
+    mov bp, ssmsgclear
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x00f0
+    mov dx, 0x111f
+    int 0x10
+    mov bp, ssmsgclear
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x101f
+    int 0x10
 
+    xor bx, bx ; default is choose top kernel
+    call print_kernel_selector
+get_load_kernel:
+    mov ah, 0
+    int 0x16    ; get user input
+    cmp ax, 0x4800
+    jz select_up
+    cmp ax, 0x5000
+    jz select_down
+    cmp al, 0x0d
+    jz get_load_kernel_done
+
+    jmp get_load_kernel
+
+select_up:
+    cmp bx, 0
+    jz get_load_kernel
+    dec bx
+    call print_kernel_selector
+    jmp get_load_kernel
+
+select_down:
+    cmp bx, 1
+    jz get_load_kernel
+    inc bx
+    call print_kernel_selector
+    jmp get_load_kernel
+
+print_kernel_selector:
+    push bx
+    cmp bx, 0
+    jnz print_kernel_selector_2
+    mov bp, ksmsg1
+    mov cx, 21      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0070  ; color: FG 7-> RGB
+    mov dx, 0x101e  ; position: row:10 col:20
+    int 0x10
+    mov bp, ksmsg2
+    mov cx, 21
+    mov ax, 0x1300
+    mov bx, 0x0007
+    mov dx, 0x111e
+    int 0x10
+    mov bp, kspointer
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x0070
+    mov dx, 0x101d
+    int 0x10
+    mov bp, ksspace
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x111d
+    int 0x10
+    jmp print_kernel_selector_end
+print_kernel_selector_2:
+    mov bp, ksmsg1
+    mov cx, 21      ; length
+    mov ax, 0x1300  ; mode: output string, don't update cursor position
+    mov bx, 0x0007  ; color: FG 7-> RGB
+    mov dx, 0x101e  ; position: row:10 col:20
+    int 0x10
+    mov bp, ksmsg2
+    mov cx, 21
+    mov ax, 0x1300
+    mov bx, 0x0070
+    mov dx, 0x111e
+    int 0x10
+    mov bp, kspointer
+    mov cx, 1
+    mov ax, 0x1301
+    mov bx, 0x0070
+    mov dx, 0x111d
+    int 0x10
+    mov bp, ksspace
+    mov cx, 1
+    mov ax, 0x1300
+    mov bx, 0x0000
+    mov dx, 0x101d
+    int 0x10
+print_kernel_selector_end
+    pop bx
+    ret
+
+get_load_kernel_done:
+    mov [0x604], ebx ; kernel id
+
+    mov eax, 3 ; clear screen
+    int 0x10
 ;--------e820 get memory size--------
     xor ebx, ebx
     mov edx, 0x534d4150
@@ -209,7 +325,9 @@ e801_failed_go_88:
 ;儲存得到的記憶體資訊
 mem_get_ok:
     mov [total_mem_bytes], edx
-
+    ; clear terminal
+    mov eax, 0x0003
+    int 0x10
 ;--------進入保護模式--------
 ;1. 開啟 A20 位址線
 ;2. 讀取 Global Descriptor Table
@@ -233,7 +351,6 @@ mem_get_ok:
 [BITS 32]
 ;以32位元指令的格式組譯指令
 %include "secure-boot.autogen.inc"
-extern RSA_by_c_is_safe_and_sound
 
 p_mode_start:
 ;初始化段暫存器
@@ -245,13 +362,25 @@ p_mode_start:
     mov ax, SELECTOR_VIDEO
     mov gs, ax
 ;顯示 P
-    mov byte [gs:160], 'P'
+    ;mov byte [gs:160], 'P'
 ;--------載入 kernel--------
+    ; choose which kernel
+    mov ax, [0x604]
+    cmp ax, 0
+    jnz not_kernel1
     mov ax, KERNEL_START_SECTOR
+    jmp choose_kernel_end
+not_kernel1:
+    mov ax, KERNEL2_START_SECTOR
+choose_kernel_end:
     mov bx, KERNEL_BASE_ADDR
     mov cx, 20
 
     call read_disk
+; If user choose to enter secure mode
+    mov eax, [0x600]
+    cmp eax, 0
+    jz integrity_test_done
 ;-------- get md5sum of the kernel ----
     push KERN_BIN_SIZE ; better sol: linker script 
     push KERNEL_BASE_ADDR
@@ -259,23 +388,68 @@ p_mode_start:
     call _rwf_md5
 
     xor ecx, ecx
+    xor ebx, ebx
 integrity_test:
-    cmp ecx, 16 
+    cmp ecx, 16
+    jz compare_decrypt
+;-------- edit by andrew Li --------------------
+;
+; this is usage and asm code for rsa decryption
+;
+; ------- rsa decrypt stored cipehr ------------
+    xor eax, eax
+    mov ax, word [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ebx ]
+    mov ebx, dword [PUB_KEY]
+    mov edx, dword [N]
+    push ecx
+    push eax
+    push ebx
+    push edx
+    call mod_power
+    pop ecx
+    pop ecx
+    pop ecx
+    pop ecx
+    inc ecx
+    mov byte[KERN_MD5_BASE + ecx + 15], al
+    mov ebx, ecx
+    imul ebx, 2
+    jmp integrity_test
+; ------ compare decrypt and md5 ---------------
+compare_decrypt:
+    xor ecx,ecx
+loop_compare:
+    cmp ecx,16
     jz integrity_test_done
-;-------- decrypt stored partial md5sum -------
-    mov eax, dword [EFUSE_KEY]
-    mov ebx, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx]
-    xor eax, ebx
-    ; mov dword [0x2010 + ecx], eax ! just for debugging
-;-------- compare 2 partial md5sum ------------
+    ; decrypt
+    mov eax, dword [KERN_MD5_BASE + 16 + ecx]
+    ; calculated md5
     mov edx, dword [KERN_MD5_BASE + ecx]
     add ecx, 4
     cmp eax, edx
-    jz integrity_test    
+    jz loop_compare
     call print_error
+    call print_skull
     jmp $
-integrity_test_done:
+; ----------------------------------------------
 
+
+
+;-------- decrypt stored partial md5sum -------
+;    mov eax, dword [EFUSE_KEY]
+;    mov ebx, dword [KERNEL_BASE_ADDR + KERN_BIN_SIZE + ecx]
+;    xor eax, ebx
+    ; mov dword [0x2010 + ecx], eax ! just for debugging
+;-------- compare 2 partial md5sum ------------
+;    mov edx, dword [KERN_MD5_BASE + ecx]
+;    add ecx, 4
+;    cmp eax, edx
+;    jz integrity_test    
+;    call print_error
+;    jmp $
+integrity_test_done:
+    ;call print_skull
+    call print_ais3_banner
     ; call RSA_by_c_is_safe_and_sound
     
 ;--------啟用分頁機制--------
@@ -417,19 +591,32 @@ print_error:
 ;--------------------------------
 ;Print ERROR
 ;--------------------------------
-    mov esi, 0x1e0
+    mov esi, 0xa0
     mov byte[gs:esi], 'E' 
-    mov byte[gs:esi + 1], 0x0F
+    mov byte[gs:esi + 1], 0xF4
     mov byte[gs:esi + 2], 'R' 
-    mov byte[gs:esi + 3], 0x0F
+    mov byte[gs:esi + 3], 0xF4
     mov byte[gs:esi + 4], 'R' 
-    mov byte[gs:esi + 5], 0x0F
+    mov byte[gs:esi + 5], 0xF4
     mov byte[gs:esi + 6], 'O' 
-    mov byte[gs:esi + 7], 0x0F
+    mov byte[gs:esi + 7], 0xF4
     mov byte[gs:esi + 8], 'R' 
-    mov byte[gs:esi + 9], 0x0F
+    mov byte[gs:esi + 9], 0xF4
     mov byte[gs:esi + 10], '!' 
-    mov byte[gs:esi + 11], 0x0F
+    mov byte[gs:esi + 11], 0xF4
+    mov ebx,0x280 
+    xor ecx, ecx
+print_loop:
+    cmp ecx, 34
+    jz print_error_end
+    mov al, byte [STR+ecx]
+    mov byte[gs:esi+ebx], al
+    inc ebx
+    mov byte[gs:esi+ebx], 0x4
+    inc ebx
+    inc ecx
+    jmp print_loop
+print_error_end:
     ret 
 
 ;--------GDT--------
@@ -467,13 +654,58 @@ loadermsg:
     db '2 loader in real.'
 
 ; ss: secure selector 
+ssmsgclear:
+    db '                 '
 ssmsg1:
-    db ' Secure mode'
-ssmsg2:
     db ' Non secure mode'
+ssmsg2:
+    db ' Secure mode'
 sspointer:
     db '>'
 ssspace:
     db ' '
 
+; ks: kernel selector 
+ksmsgclear:
+    db '                      '
+ksmsg1:
+    db ' 1. Terry NiNi Kernel'
+ksmsg2:
+    db ' 2. ????? ???? Kernel'
+kspointer:
+    db '>'
+ksspace:
+    db ' '
+
+STR:
+    db 'You did not pass the'
+    db ' verification!' ;
+
+; ssb: secure selector banner
+;           :::     ::::::::::: ::::::::   ::::::::
+;        :+: :+:       :+:    :+:    :+: :+:    :+:
+;      +:+   +:+      +:+    +:+               +:+ 
+;    +#++:++#++:     +#+    +#++:++#++     +#++:   
+;   +#+     +#+     +#+           +#+        +#+   
+;  #+#     #+#     #+#    #+#    #+# #+#    #+#    
+; ###     ### ########### ########   ########      
+; length of a row: 49
+ssbr1:
+    db '          :::     ::::::::::: ::::::::   ::::::::' ; length 49
+ssbr2:
+    db '       :+: :+:       :+:    :+:    :+: :+:    :+:'
+ssbr3:
+    db '     +:+   +:+      +:+    +:+               +:+ '
+ssbr4:
+    db '   +#++:++#++:     +#+    +#++:++#++     +#++:   '
+ssbr5:
+    db '  +#+     +#+     +#+           +#+        +#+   '
+ssbr6:
+    db ' #+#     #+#     #+#    #+#    #+# #+#    #+#    '
+ssbr7:
+    db '###     ### ########### ########   ########      '
+
 %include "md5.inc"
+%include "math.inc"
+%include "banner.inc"
+%include "skull.inc"

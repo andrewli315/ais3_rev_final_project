@@ -48,7 +48,7 @@ SECTION MBR vstart=0x7c00
 ;read loader from disk to RAM
     mov eax, LOADER_START_SECTOR
     mov bx, LOADER_BASE_ADDR
-    mov cx, 8
+    mov cx, 32
     call read_disk
 ;execute loader
     jmp LOADER_BASE_ADDR

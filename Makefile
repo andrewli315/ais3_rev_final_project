@@ -4,9 +4,9 @@ CFLAGS=-fno-builtin -fno-stack-protector -O2 -m32
 all:img
 img:asm
 	dd if=$(BUILD_DIR)/mbr.bin of=hd60M.img count=1 bs=512 conv=notrunc
-	dd if=$(BUILD_DIR)/loader.bin of=hd60M.img bs=512 count=8 seek=1 conv=notrunc 
-	dd if=$(BUILD_DIR)/kernel.bin of=hd60M.img bs=512 count=200 seek=9 conv=notrunc	
-	dd if=$(BUILD_DIR)/kernel2.bin of=hd60M.img bs=512 count=200 seek=209 conv=notrunc	
+	dd if=$(BUILD_DIR)/loader.bin of=hd60M.img bs=512 count=32 seek=1 conv=notrunc 
+	dd if=$(BUILD_DIR)/kernel.bin of=hd60M.img bs=512 count=200 seek=33 conv=notrunc	
+	dd if=$(BUILD_DIR)/kernel2.bin of=hd60M.img bs=512 count=200 seek=233 conv=notrunc	
 asm:
 	nasm -I include/ -o $(BUILD_DIR)/mbr.bin mbr.S
 	nasm -I include/ -f elf32 -o $(BUILD_DIR)/print.o lib/print.S

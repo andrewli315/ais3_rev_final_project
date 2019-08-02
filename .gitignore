@@ -1,3 +1,5 @@
 hd60M.img
 bochsout.txt
 build/*
+include/secure-boot.autogen.inc
+*.o

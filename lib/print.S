@@ -47,9 +47,9 @@ is_backspace:
 
 is_printable:
     shl bx, 1
-    mov [gs:bx], cl
+    mov [gs:bx+0xa00], cl
     inc bx
-    mov byte [gs:bx], 0x07
+    mov byte [gs:bx+0xa00], 0x07
     shr bx, 1
     inc bx
     cmp bx, 2000
